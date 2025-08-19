@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dodge the Falling Blocks</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    canvas {
+      background: #222;
+      border: 2px solid #fff;
+      border-radius: 10px;
+    }
+
+    #game-over {
+      position: absolute;
+      top: 40%;
+      font-size: 2rem;
+      display: none;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="400" height="600"></canvas>
+  <div id="game-over">Game Over! <br> Press Space to Restart</div>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let player = { x: 180, y: 550, width: 40, height: 40, speed: 5 };
+    let blocks = [];
+    let gameOver = false;
+    let score = 0;
+
+    document.addEventListener("keydown", movePlayer);
+
+    function movePlayer(e) {
+      if (!gameOver) {
+        if (e.key === "ArrowLeft" && player.x > 0) {
+          player.x -= player.speed;
+        } else if (e.key === "ArrowRight" && player.x + player.width < canvas.width) {
+          player.x += player.speed;
+        }
+      } else if (e.code === "Space") {
+        restartGame();
+      }
+    }
+
+    function createBlock() {
+      let x = Math.random() * (canvas.width - 40);
+      blocks.push({ x: x, y: -40, width: 40, height: 40, speed: 3 });
+    }
+
+    function update() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw player
+      ctx.fillStyle = "cyan";
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+
+      // Update and draw blocks
+      ctx.fillStyle = "red";
+      for (let i = 0; i < blocks.length; i++) {
+        blocks[i].y += blocks[i].speed;
+        ctx.fillRect(blocks[i].x, blocks[i].y, blocks[i].width, blocks[i].height);
+
+        // Collision detection
+        if (
+          player.x < blocks[i].x + blocks[i].width &&
+          player.x + player.width > blocks[i].x &&
+          player.y < blocks[i].y + blocks[i].height &&
+          player.y + player.height > blocks[i].y
+        ) {
+          endGame();
+        }
+
+        // Remove blocks that are off-screen
+        if (blocks[i].y > canvas.height) {
+          blocks.splice(i, 1);
+          score++;
+        }
+      }
+
+      // Draw score
+      ctx.fillStyle = "white";
+      ctx.font = "20px Arial";
+      ctx.fillText("Score: " + score, 10, 25);
+
+      requestAnimationFrame(update);
+    }
+
+    function endGame() {
+      gameOver = true;
+      document.getElementById("game-over").style.display = "block";
+    }
+
+    function restartGame() {
+      gameOver = false;
+      blocks = [];
+      score = 0;
+      player.x = 180;
+      document.getElementById("game-over").style.display = "none";
+      update();
+    }
+
+    setInterval(createBlock, 1500);
+    update();
+  </script>
+</body>
+</html>
